@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func CheckBase() {
@@ -32,7 +32,7 @@ func CheckBase() {
 			return
 		}
 
-		db, err := sql.Open("sqlite", "base/scheduler.db")
+		db, err := sql.Open("sqlite3", "base/scheduler.db")
 		if err != nil {
 			fmt.Println(err)
 			return
