@@ -9,7 +9,6 @@ import (
 // Хендлер добавления задачи
 func postTask(w http.ResponseWriter, r *http.Request) {
 	var task Task
-	var task1 TaskGet
 	var buf bytes.Buffer
 
 	_, err := buf.ReadFrom(r.Body)
@@ -26,11 +25,7 @@ func postTask(w http.ResponseWriter, r *http.Request) {
 		w.Write(resp)
 		return
 	}
-	strErr := checkCorrectIn(task1, w)
-	if strErr == "error" {
-		return
-	}
-	strErr = writeTask(task, w)
+	strErr := postTaskDB(task, w)
 	if strErr == "error" {
 		return
 	}

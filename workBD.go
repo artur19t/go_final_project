@@ -11,14 +11,62 @@ import (
 	"time"
 )
 
-// Запись задачи в БД
-func writeTask(task Task, w http.ResponseWriter) string {
-	db, err := sql.Open("sqlite", "base/scheduler.db")
+func postTaskDB(task Task, w http.ResponseWriter) string {
+	today := time.Now().Format("20060102")
+	if task.Date == "" {
+		task.Date = today
+	}
+
+	_, err := time.Parse("20060102", task.Date)
 	if err != nil {
 		err1 := SetError{err}
 		resp, _ := json.Marshal(err1)
 		w.Write(resp)
 		return "error"
+	}
+	if task.Date < today && task.Repeat == "" {
+		task.Date = today
+	}
+	if task.Date < today && task.Repeat != "" {
+		task.Date, _ = NextDate(time.Now(), task.Date, task.Repeat)
+		if task.Date == "-1" {
+			err1 := SetError{errors.New("не верно указано правило повторения")}
+			resp, _ := json.Marshal(err1)
+			w.Write(resp)
+			return "error"
+		}
+
+	}
+	if task.Title == "" {
+		err = errors.New("не указан заголовок задачи")
+		err1 := SetError{err}
+		resp, _ := json.Marshal(err1)
+		w.Write(resp)
+		return "error"
+	}
+	dateToTable, _ := NextDate(time.Now(), task.Date, task.Repeat)
+	if dateToTable == "-1" {
+		err := errors.New("не верно указано правило повторения")
+		err1 := SetError{err}
+		resp, _ := json.Marshal(err1)
+		w.Write(resp)
+		return "error"
+	}
+	resp := writeTask(task, w)
+	if resp[0] == 'e' {
+		return "error"
+	}
+	return ""
+}
+
+// Запись задачи в БД
+func writeTask(task Task, w http.ResponseWriter) []byte {
+	db, err := sql.Open("sqlite", "base/scheduler.db")
+	if err != nil {
+		err1 := SetError{err}
+		resp, _ := json.Marshal(err1)
+		w.Write(resp)
+		return []byte{'e'}
 	}
 	defer db.Close()
 
@@ -29,7 +77,7 @@ func writeTask(task Task, w http.ResponseWriter) string {
 		sql.Named("repeat", task.Repeat))
 	if err != nil {
 		//fmt.Println(err)
-		return "error"
+		return []byte{'e'}
 	}
 
 	id, _ := res.LastInsertId()
@@ -37,8 +85,8 @@ func writeTask(task Task, w http.ResponseWriter) string {
 	resp, _ := json.Marshal(setId)
 	w.Write(resp)
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	return ""
+	//w.WriteHeader(http.StatusCreated)
+	return resp
 }
 
 // Проверка корректности входящих данных
