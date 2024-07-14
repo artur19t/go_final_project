@@ -1,4 +1,4 @@
-package main
+package model
 
 type Task struct {
 	Date    string `json:"date"`

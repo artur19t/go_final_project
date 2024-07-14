@@ -6,17 +6,21 @@ import (
 	"net/http"
 	"time"
 
+	"go-final/db"
+
 	_ "modernc.org/sqlite"
 )
 
 func main() {
-	CheckBase()
+	db.CheckBase()
+	db.ConnectDB()
 	dir := "web"
 	http.Handle("/api/nextdate", http.HandlerFunc(nextDate))
 	http.Handle("/", http.FileServer(http.Dir(dir)))
 	http.Handle("/api/task", http.HandlerFunc(determinant))
 	http.Handle("/api/tasks", http.HandlerFunc(getTasks))
 	http.Handle("/api/task/done", http.HandlerFunc(doneTask))
+
 	log.Printf("Запуск сервера на %d порту", 7540)
 	err := http.ListenAndServe(":7540", nil)
 	if err != nil {
@@ -48,6 +52,6 @@ func nextDate(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		res.Write([]byte(fmt.Sprintf("%T", err)))
 	}
-	dateToRet, _ := NextDate(nowT, date, repeat)
+	dateToRet, _ := db.NextDate(nowT, date, repeat)
 	res.Write([]byte(dateToRet))
 }

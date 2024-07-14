@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"database/sql"
@@ -11,6 +11,23 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+type Repository struct {
+	Db *sql.DB
+}
+
+var DB Repository
+
+func ConnectDB() error {
+	db, err := sql.Open("sqlite", "base/scheduler.db")
+	if err != nil {
+		return err
+	}
+	DB = Repository{
+		Db: db,
+	}
+	return nil
+}
 
 func CheckBase() {
 	//appPath := "base"
